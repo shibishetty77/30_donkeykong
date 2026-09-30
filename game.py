@@ -37,9 +37,16 @@ def theme_color(score):
     return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
 
 
+floating_popups = []
+
+
 def on_barrel_jumped(player, barrel):
     """Called when the player clears a barrel; add a bonus effect here."""
-    pass
+    floating_popups.append({
+        "text": "+100",
+        "pos": [barrel.pos.x, barrel.pos.y - 15],
+        "timer": 0.8
+    })
 
 
 def score_multiplier(score):
@@ -193,6 +200,9 @@ def draw_scene(screen, font, player, barrels, score, lives, state):
     body = pygame.Rect(0, 0, PLAYER_W, PLAYER_H)
     body.midbottom = (player.pos.x, player.pos.y)
     pygame.draw.rect(screen, (50, 180, 240), body)
+    for popup in floating_popups:
+        popup_surf = font.render(popup["text"], True, (255, 230, 80))
+        screen.blit(popup_surf, popup_surf.get_rect(center=(int(popup["pos"][0]), int(popup["pos"][1]))))
     hud = font.render(f"Score {score}   Lives {lives}   R = reset", True, (240, 240, 240))
     screen.blit(hud, (10, 8))
     if state != "play":
@@ -220,6 +230,7 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 player.reset()
                 barrels.clear()
+                floating_popups.clear()
                 score, lives, state = 0, 3, "play"
         if state == "play":
             player.update(dt, pygame.key.get_pressed())
@@ -234,6 +245,7 @@ def main():
                     lives -= 1
                     player.reset()
                     barrels.clear()
+                    floating_popups.clear()
                     state = "play" if lives > 0 else "lose"
                     break
                 above = 0 < barrel.pos.y - player.pos.y + BARREL_R < 40
@@ -242,6 +254,10 @@ def main():
                     score += int(100 * (score_multiplier(score) or 1))
                     on_barrel_jumped(player, barrel)
             barrels[:] = [b for b in barrels if b.pos.y < HEIGHT + 30]
+            for popup in floating_popups:
+                popup["pos"][1] -= 35 * dt
+                popup["timer"] -= dt
+            floating_popups[:] = [p for p in floating_popups if p["timer"] > 0]
             if player.center().distance_to(pygame.Vector2(PRINCESS_POS)) < 24:
                 score += 1000
                 state = "win"
