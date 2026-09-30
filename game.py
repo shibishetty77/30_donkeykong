@@ -164,7 +164,7 @@ class Barrel:
         for index, (lx, _, upper) in enumerate(LADDERS):
             if upper == self.plat and abs(self.pos.x - lx) < 3 and index not in self.skip:
                 self.skip.add(index)
-                if random.random() < 0.7:
+                if random.random() < 0.3:
                     self.ladder = index
                     self.pos.x = lx
 
